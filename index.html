@@ -59,19 +59,52 @@
   <div id="timeline"></div>
 </div>
 
-<script>
-// --------- Daten nur einmal deklarieren ---------
-let data = JSON.parse(localStorage.getItem("timelineData")) || [];
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
+<script>
+// ------------- Firebase Setup -------------
+const firebaseConfig = {
+  apiKey: "AIzaSyDXXye7tWCW4VT1SOBjVxgYqWHyOJIDT8Y",
+  authDomain: "aeternum-chronoverse.firebaseapp.com",
+  databaseURL: "https://aeternum-chronoverse-default-rtdb.firebaseio.com",
+  projectId: "aeternum-chronoverse",
+  storageBucket: "aeternum-chronoverse.firebasestorage.app",
+  messagingSenderId: "606280452565",
+  appId: "1:606280452565:web:4e1dc2a0f3ef231ba2d55c"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ------------- Timeline Daten -------------
+let data = []; // initial leer
+
+// ------------- Wrapper & Timeline -------------
 const wrapper = document.getElementById("wrapper");
 const timeline = document.getElementById("timeline");
 
-// ---------- Speichern ----------
+// ------------- Speichern in Firebase + lokal -------------
 function save() {
   localStorage.setItem("timelineData", JSON.stringify(data));
+  db.ref('timeline').set(data);
 }
 
-// ---------- Render ----------
+// ------------- Daten aus Firebase laden -------------
+db.ref('timeline').on('value', snapshot => {
+  const firebaseData = snapshot.val();
+  if(firebaseData) {
+    data = firebaseData;
+    render();
+  } else {
+    // falls leer, lokale Daten laden
+    const localData = JSON.parse(localStorage.getItem("timelineData")) || [];
+    data = localData;
+    render();
+  }
+});
+
+// ------------- Render Funktion -------------
 function render() {
   document.querySelectorAll(".marker, .label").forEach(e => e.remove());
 
@@ -87,7 +120,7 @@ function render() {
     label.style.left = (item.x + 5) + "px";
     label.style.top = item.y + "px";
 
-    // Editieren bei Klick
+    // Editieren
     label.addEventListener("click", e => {
       e.stopPropagation();
       label.contentEditable = true;
@@ -98,25 +131,14 @@ function render() {
     // Tastatursteuerung
     label.addEventListener("keydown", e => {
       let y = parseInt(label.style.top);
-
-      if (e.key === "Enter") {
-        e.preventDefault();
-        y -= 20;
-      }
-      if (e.key === "ArrowUp") {
-        e.preventDefault();
-        y -= 5;
-      }
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        y += 5;
-      }
-
+      if(e.key==="Enter"){ e.preventDefault(); y-=20; }
+      if(e.key==="ArrowUp"){ e.preventDefault(); y-=5; }
+      if(e.key==="ArrowDown"){ e.preventDefault(); y+=5; }
       label.style.top = y + "px";
       data[index].y = y;
     });
 
-    // Speichern bei Rausklicken
+    // Speichern bei Blur
     label.addEventListener("blur", () => {
       label.contentEditable = false;
       label.classList.remove("editing");
@@ -124,27 +146,19 @@ function render() {
       save();
     });
 
-    // Mausziehen
-    let dragging = false;
-    let offsetY = 0;
-
-    label.addEventListener("mousedown", e => {
-      dragging = true;
-      offsetY = e.clientY - label.offsetTop;
+    // Drag & Drop
+    let dragging=false, offsetY=0;
+    label.addEventListener("mousedown", e=>{
+      dragging=true; offsetY = e.clientY - label.offsetTop;
     });
-
-    document.addEventListener("mousemove", e => {
-      if (!dragging) return;
+    document.addEventListener("mousemove", e=>{
+      if(!dragging) return;
       let y = e.clientY - offsetY;
       label.style.top = y + "px";
       data[index].y = y;
     });
-
-    document.addEventListener("mouseup", () => {
-      if (dragging) {
-        dragging = false;
-        save();
-      }
+    document.addEventListener("mouseup", ()=>{
+      if(dragging){ dragging=false; save(); }
     });
 
     wrapper.appendChild(marker);
@@ -152,27 +166,21 @@ function render() {
   });
 }
 
-// Klick auf Timeline erzeugt neuen Marker
-timeline.addEventListener("click", e => {
+// ------------- Klick auf Timeline -------------
+timeline.addEventListener("click", e=>{
   const x = e.clientX + window.scrollX;
-  const y = window.innerHeight / 2 - 60;
+  const y = window.innerHeight/2 - 60;
 
-  data.push({
-    x: x,
-    y: y,
-    text: "Text eingeben"
-  });
-
+  data.push({x:x, y:y, text:"Text eingeben"});
   save();
   render();
 
-  // direkt editieren
   const labels = document.querySelectorAll(".label");
-  const last = labels[labels.length - 1];
+  const last = labels[labels.length-1];
   last.click();
 });
 
-// Start
+// ------------- Start -------------
 render();
 </script>
 
