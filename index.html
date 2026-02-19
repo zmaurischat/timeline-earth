@@ -55,39 +55,20 @@
 </head>
 
 <body>
-
 <div id="wrapper">
   <div id="timeline"></div>
 </div>
 
 <script>
+// --------- Daten nur einmal deklarieren ---------
+let data = JSON.parse(localStorage.getItem("timelineData")) || [];
+
 const wrapper = document.getElementById("wrapper");
 const timeline = document.getElementById("timeline");
 
-// Live-Daten von Firebase abrufen
-let data = [];
-
-const dataRef = db.ref("timeline"); // Pfad in der Realtime Database
-
-// Wenn sich Daten ändern, neu rendern
-dataRef.on("value", snapshot => {
-  const val = snapshot.val();
-  if (val) {
-    data = val;
-    render();
-  }
-});
-
-// Funktion, um Daten zu speichern
-function save() {
-  dataRef.set(data);
-}
-
-
 // ---------- Speichern ----------
 function save() {
-  dataRef.set(data);
-
+  localStorage.setItem("timelineData", JSON.stringify(data));
 }
 
 // ---------- Render ----------
@@ -106,7 +87,7 @@ function render() {
     label.style.left = (item.x + 5) + "px";
     label.style.top = item.y + "px";
 
-    // ✏️ Editieren bei Klick
+    // Editieren bei Klick
     label.addEventListener("click", e => {
       e.stopPropagation();
       label.contentEditable = true;
@@ -114,7 +95,7 @@ function render() {
       label.focus();
     });
 
-    // ⌨️ Tastatursteuerung
+    // Tastatursteuerung
     label.addEventListener("keydown", e => {
       let y = parseInt(label.style.top);
 
@@ -135,7 +116,7 @@ function render() {
       data[index].y = y;
     });
 
-    // 💾 Speichern nur bei Rausklicken
+    // Speichern bei Rausklicken
     label.addEventListener("blur", () => {
       label.contentEditable = false;
       label.classList.remove("editing");
@@ -143,7 +124,7 @@ function render() {
       save();
     });
 
-    // 🖱 Mausziehen
+    // Mausziehen
     let dragging = false;
     let offsetY = 0;
 
@@ -171,7 +152,7 @@ function render() {
   });
 }
 
-// ---------- Klick auf Timeline ----------
+// Klick auf Timeline erzeugt neuen Marker
 timeline.addEventListener("click", e => {
   const x = e.clientX + window.scrollX;
   const y = window.innerHeight / 2 - 60;
@@ -191,47 +172,8 @@ timeline.addEventListener("click", e => {
   last.click();
 });
 
-// ---------- Start ----------
+// Start
 render();
-</script>
-<!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-<script>
-  // Deine Firebase-Konfiguration
-  const firebaseConfig = {
-    apiKey: "AIzaSyDXXye7tWCW4VT1SOBjVxgYqWHyOJIDT8Y",
-    authDomain: "aeternum-chronoverse.firebaseapp.com",
-    databaseURL: "https://aeternum-chronoverse-default-rtdb.firebaseio.com",
-    projectId: "aeternum-chronoverse",
-    storageBucket: "aeternum-chronoverse.firebasestorage.app",
-    messagingSenderId: "606280452565",
-    appId: "1:606280452565:web:4e1dc2a0f3ef231ba2d55c"
-  };
-
-  // Firebase initialisieren
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  // Live-Daten von Firebase abrufen
-let data = [];
-
-const dataRef = db.ref("timeline"); // Pfad in der Realtime Database
-
-// Wenn sich Daten ändern, neu rendern
-dataRef.on("value", snapshot => {
-  const val = snapshot.val();
-  if (val) {
-    data = val;
-    render();
-  }
-});
-
-// Funktion, um Daten zu speichern
-function save() {
-  dataRef.set(data);
-}
-
 </script>
 
 </body>
