@@ -35,6 +35,7 @@
     height: 30px;
     background: black;
     top: calc(50% - 15px);
+    cursor: move;
   }
 
   .label {
@@ -64,7 +65,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
-// ------------- Firebase Setup -------------
+// -------- Firebase Setup --------
 const firebaseConfig = {
   apiKey: "AIzaSyDXXye7tWCW4VT1SOBjVxgYqWHyOJIDT8Y",
   authDomain: "aeternum-chronoverse.firebaseapp.com",
@@ -77,34 +78,32 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// ------------- Timeline Daten -------------
+// -------- Timeline Daten --------
 let data = []; // initial leer
 
-// ------------- Wrapper & Timeline -------------
 const wrapper = document.getElementById("wrapper");
 const timeline = document.getElementById("timeline");
 
-// ------------- Speichern in Firebase + lokal -------------
+// -------- Speichern in Firebase + lokal --------
 function save() {
   localStorage.setItem("timelineData", JSON.stringify(data));
   db.ref('timeline').set(data);
 }
 
-// ------------- Daten aus Firebase laden -------------
+// -------- Daten aus Firebase laden --------
 db.ref('timeline').on('value', snapshot => {
   const firebaseData = snapshot.val();
   if(firebaseData) {
     data = firebaseData;
     render();
   } else {
-    // falls leer, lokale Daten laden
     const localData = JSON.parse(localStorage.getItem("timelineData")) || [];
     data = localData;
     render();
   }
 });
 
-// ------------- Render Funktion -------------
+// -------- Render Funktion --------
 function render() {
   document.querySelectorAll(".marker, .label").forEach(e => e.remove());
 
@@ -120,7 +119,7 @@ function render() {
     label.style.left = (item.x + 5) + "px";
     label.style.top = item.y + "px";
 
-    // Editieren
+    // ---- Editieren ----
     label.addEventListener("click", e => {
       e.stopPropagation();
       label.contentEditable = true;
@@ -128,7 +127,6 @@ function render() {
       label.focus();
     });
 
-    // Tastatursteuerung
     label.addEventListener("keydown", e => {
       let y = parseInt(label.style.top);
       if(e.key==="Enter"){ e.preventDefault(); y-=20; }
@@ -138,7 +136,6 @@ function render() {
       data[index].y = y;
     });
 
-    // Speichern bei Blur
     label.addEventListener("blur", () => {
       label.contentEditable = false;
       label.classList.remove("editing");
@@ -146,14 +143,41 @@ function render() {
       save();
     });
 
-    // Drag & Drop
-    let dragging=false, offsetY=0;
+    // ---- Marker verschiebbar ----
+    let dragMarker = false, offsetX=0, offsetY=0;
+    marker.addEventListener("mousedown", e => {
+      dragMarker = true;
+      offsetX = e.clientX - marker.offsetLeft;
+      offsetY = e.clientY - parseInt(label.style.top);
+    });
+
+    document.addEventListener("mousemove", e => {
+      if(!dragMarker) return;
+      let idx = Array.from(wrapper.querySelectorAll(".marker")).indexOf(marker);
+      let newX = e.clientX - offsetX;
+      let newY = e.clientY - offsetY;
+      marker.style.left = newX + "px";
+      label.style.left = (newX+5) + "px";
+      label.style.top = newY + "px";
+      data[idx].x = newX;
+      data[idx].y = newY;
+    });
+
+    document.addEventListener("mouseup", e => {
+      if(dragMarker){
+        save();
+        dragMarker=false;
+      }
+    });
+
+    // ---- Label verschiebbar vertikal ----
+    let dragging=false, offsetLabelY=0;
     label.addEventListener("mousedown", e=>{
-      dragging=true; offsetY = e.clientY - label.offsetTop;
+      dragging=true; offsetLabelY = e.clientY - label.offsetTop;
     });
     document.addEventListener("mousemove", e=>{
       if(!dragging) return;
-      let y = e.clientY - offsetY;
+      let y = e.clientY - offsetLabelY;
       label.style.top = y + "px";
       data[index].y = y;
     });
@@ -161,16 +185,32 @@ function render() {
       if(dragging){ dragging=false; save(); }
     });
 
+    // ---- Marker löschen (Rechtsklick) ----
+    marker.addEventListener("contextmenu", e=>{
+      e.preventDefault();
+      let idx = Array.from(wrapper.querySelectorAll(".marker")).indexOf(marker);
+      data.splice(idx,1);
+      save();
+      render();
+    });
+
+    label.addEventListener("contextmenu", e=>{
+      e.preventDefault();
+      let idx = Array.from(wrapper.querySelectorAll(".label")).indexOf(label);
+      data.splice(idx,1);
+      save();
+      render();
+    });
+
     wrapper.appendChild(marker);
     wrapper.appendChild(label);
   });
 }
 
-// ------------- Klick auf Timeline -------------
+// ---- Klick auf Timeline ----
 timeline.addEventListener("click", e=>{
   const x = e.clientX + window.scrollX;
   const y = window.innerHeight/2 - 60;
-
   data.push({x:x, y:y, text:"Text eingeben"});
   save();
   render();
@@ -180,7 +220,7 @@ timeline.addEventListener("click", e=>{
   last.click();
 });
 
-// ------------- Start -------------
+// ---- Start ----
 render();
 </script>
 
