@@ -175,6 +175,26 @@ timeline.addEventListener("click", e => {
 // ---------- Start ----------
 render();
 </script>
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+  // Deine Firebase-Konfiguration
+  const firebaseConfig = {
+    apiKey: "AIzaSyDXXye7tWCW4VT1SOBjVxgYqWHyOJIDT8Y",
+    authDomain: "aeternum-chronoverse.firebaseapp.com",
+    databaseURL: "https://aeternum-chronoverse-default-rtdb.firebaseio.com",
+    projectId: "aeternum-chronoverse",
+    storageBucket: "aeternum-chronoverse.firebasestorage.app",
+    messagingSenderId: "606280452565",
+    appId: "1:606280452565:web:4e1dc2a0f3ef231ba2d55c"
+  };
+
+  // Firebase initialisieren
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+</script>
 
 </body>
 </html>
