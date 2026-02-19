@@ -64,11 +64,30 @@
 const wrapper = document.getElementById("wrapper");
 const timeline = document.getElementById("timeline");
 
-let data = JSON.parse(localStorage.getItem("timelineData")) || [];
+// Live-Daten von Firebase abrufen
+let data = [];
+
+const dataRef = db.ref("timeline"); // Pfad in der Realtime Database
+
+// Wenn sich Daten ändern, neu rendern
+dataRef.on("value", snapshot => {
+  const val = snapshot.val();
+  if (val) {
+    data = val;
+    render();
+  }
+});
+
+// Funktion, um Daten zu speichern
+function save() {
+  dataRef.set(data);
+}
+
 
 // ---------- Speichern ----------
 function save() {
-  localStorage.setItem("timelineData", JSON.stringify(data));
+  dataRef.set(data);
+
 }
 
 // ---------- Render ----------
@@ -194,6 +213,25 @@ render();
   // Firebase initialisieren
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+  // Live-Daten von Firebase abrufen
+let data = [];
+
+const dataRef = db.ref("timeline"); // Pfad in der Realtime Database
+
+// Wenn sich Daten ändern, neu rendern
+dataRef.on("value", snapshot => {
+  const val = snapshot.val();
+  if (val) {
+    data = val;
+    render();
+  }
+});
+
+// Funktion, um Daten zu speichern
+function save() {
+  dataRef.set(data);
+}
+
 </script>
 
 </body>
